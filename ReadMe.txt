@@ -1,0 +1,1 @@
+﻿Adds an ability that knocks out all remaining soldiers, so they can be captured.
