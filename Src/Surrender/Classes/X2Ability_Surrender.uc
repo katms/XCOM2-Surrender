@@ -25,7 +25,7 @@ static function X2DataTemplate CreateSurrender()
 	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
 	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.PLACE_EVAC_PRIORITY;
 	Template.Hostility = eHostility_Defensive;
-	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_damage_control";
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_voidadept";
 	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.bAllowedByDefault = true;
 
@@ -40,6 +40,7 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilityMultiTargetStyle = new class'X2AbilityMultiTarget_AllAllies';
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
 
+	Template.AbilityToHitCalc = default.DeadEye;
 
 	// shooter conditions
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
