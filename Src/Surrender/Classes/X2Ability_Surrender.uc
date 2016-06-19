@@ -25,7 +25,7 @@ static function X2DataTemplate CreateSurrender()
 	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
 	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.PLACE_EVAC_PRIORITY;
 	Template.Hostility = eHostility_Defensive;
-	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_coupdegrace";
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_damage_control";
 	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.bAllowedByDefault = true;
 
