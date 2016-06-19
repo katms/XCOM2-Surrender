@@ -43,10 +43,6 @@ static function X2DataTemplate CreateSurrender()
 
 	// shooter conditions
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
-	
-	ShooterProperty = new class'X2Condition_UnitProperty';
-	ShooterProperty.ExcludeConcealed = true;
-	Template.AbilityShooterConditions.AddItem(ShooterProperty);
 
 	// allow anyone to surrender
 	SkipExclusions.AddItem(class'X2Ability_CarryUnit'.default.CarryUnitEffectName);
@@ -56,15 +52,13 @@ static function X2DataTemplate CreateSurrender()
 	Template.AddShooterEffectExclusions(SkipExclusions);
 
 
-	// target conditions
+	// target conditions, get all soldiers, even if panicked or in stasis
 	UnitProperty = new class'X2Condition_UnitProperty';
 	UnitProperty.ExcludeHostileToSource = true;
 	UnitProperty.ExcludeFriendlyToSource = false;
 	UnitProperty.ExcludeInStasis = false;
 	UnitProperty.ExcludePanicked = false; // panicked units can surrender but they need someone else to activate this ability
 	UnitProperty.TreatMindControlledSquadmateAsHostile = true; // leave mindcontrolled allies untouched
-	UnitProperty.ExcludeConcealed = true; // concealed soldiers don't surrender
-	UnitProperty.ExcludeCivilian = true; // what about the VIP?
 	UnitProperty.FailOnNonUnits = true;
 
 	// exclude units that are already unconscious
