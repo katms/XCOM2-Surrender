@@ -22,6 +22,9 @@ static function X2DataTemplate CreateSurrender()
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, default.SurrenderName);
 
+	// disable for multiplayer
+	Template.RemoveTemplateAvailablility(Template.BITFIELD_GAMEAREA_Multiplayer);
+
 	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
 	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.PLACE_EVAC_PRIORITY;
 	Template.Hostility = eHostility_Defensive;
