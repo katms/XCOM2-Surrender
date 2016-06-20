@@ -19,7 +19,7 @@ static function X2DataTemplate CreateSurrender()
 	local array<name> SkipExclusions;
 	local X2AbilityCost_ActionPoints ActionPointCost;
 	local X2Condition_UnitEffects ExcludeEffects;
-	local X2Effect_Executed ExecutedEffect;
+	local X2Effect ExecutedEffect;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, default.SurrenderName);
 

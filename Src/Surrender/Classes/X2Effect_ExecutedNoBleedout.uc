@@ -1,6 +1,6 @@
-class X2Effect_ExecutedNoBleedout extends X2Effect_Executed;
+class X2Effect_ExecutedNoBleedout extends X2Effect;
+// for whatever reason extending from X2Effect_Executed will cause redundant messages (killed/stopped bleeding out/killed again)
 
-// todo: get rid of redundant notices (killed, then no longer bleeding out, then killed, again)
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
 	local XComGameState_Unit TargetUnit;
