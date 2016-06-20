@@ -39,3 +39,9 @@ protected function int GetHitChance(XComGameState_Ability kAbility, AvailableTar
 {
 	return 100-PercentChanceToFail;
 }
+
+function int GetShotBreakdown(XComGameState_Ability kAbility, AvailableTarget kTarget, optional out ShotBreakdown kBreakdown)
+{
+	kBreakdown.HideShotBreakdown = true;
+	return 100-PercentChanceToFail;
+}
