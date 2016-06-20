@@ -33,6 +33,8 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.bAllowedByDefault = true;
 
+	Template.bSkipFireAction = true;
+
 	ActionPointCost = new class'X2AbilityCost_ActionPoints';
 	ActionPointCost.iNumPoints = 1;
 	ActionPointCost.bConsumeAllPoints = true;
@@ -89,7 +91,7 @@ static function X2DataTemplate CreateSurrender()
 	Template.AddMultiTargetEffect(ExecutedEffect);
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-	// no visualization
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization; 
 
 	return Template;
 }
