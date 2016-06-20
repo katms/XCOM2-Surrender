@@ -79,7 +79,6 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
 
 	// if surrender fails, all soldiers are killed
-	// ...or bleeding out actually, but in context it's the same
 	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
 	ExecutedEffect.bApplyOnHit = false;
 	ExecutedEffect.bApplyOnMiss = true;
@@ -91,9 +90,24 @@ static function X2DataTemplate CreateSurrender()
 	Template.AddMultiTargetEffect(ExecutedEffect);
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
-	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization; 
+	Template.BuildVisualizationFn = Surrender_BuildVisualization;
 
 	return Template;
+}
+
+simulated function Surrender_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+{
+	local XComGameStateContext_Ability AbilityContext;
+	AbilityContext = XComGameStateContext_Ability(VisualizeGameState.GetContext());
+
+	// surrender failed, you get to watch your squad die
+	// also since the gremlin will still be told to die, it will look less silly if the specialist isn't standing there complete unfazed
+	if(AbilityContext.ResultContext.HitResult == eHit_Miss)
+	{
+		TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
+	}
+
+	// surrender succeeded, don't visualize everyone falling unconscious
 }
 
 defaultproperties
