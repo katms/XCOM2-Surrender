@@ -76,7 +76,7 @@ static function X2DataTemplate CreateSurrender()
 
 	// if surrender fails, all soldiers are killed
 	// ...or bleeding out actually, but in context it's the same
-	ExecutedEffect = new class'X2Effect_Executed';
+	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
 	ExecutedEffect.bApplyOnHit = false;
 	ExecutedEffect.bApplyOnMiss = true;
 
