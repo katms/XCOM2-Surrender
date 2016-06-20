@@ -62,6 +62,8 @@ static function X2DataTemplate CreateSurrender()
 	UnitProperty = new class'X2Condition_UnitProperty';
 	UnitProperty.ExcludeHostileToSource = true;
 	UnitProperty.ExcludeFriendlyToSource = false;
+	// todo: make sure this works for VIP
+	UnitProperty.RequireSquadmates = true; // prevents random civilians counting as targets
 	UnitProperty.ExcludeInStasis = false;
 	UnitProperty.ExcludePanicked = false; // panicked units can surrender but they need someone else to activate this ability
 	UnitProperty.TreatMindControlledSquadmateAsHostile = true; // leave mindcontrolled allies untouched
