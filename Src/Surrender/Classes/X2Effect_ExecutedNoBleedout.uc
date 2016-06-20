@@ -12,13 +12,10 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 	KillAmount = TargetUnit.GetCurrentStat(eStat_HP) + TargetUnit.GetCurrentStat(eStat_ShieldHP);
 
 	// eliminate the chance for them to bleed out, since it wouldn't make sense
-	// and it causes the game to tally casualties incorrectly
-	// (bleeding out counts as wound even if being lost kills them)
+	// and it causes the game to tally casualties incorrectly sometimes
+	// and might not set cause of death correctly
 	// having your surrender rejected is pretty disheartening
 	TargetUnit.SetCurrentStat(eStat_Will, 0);
 
-	// todo: the memorial wall will attribute deaths to the surrendering soldier,
-	//		 which is all well and good I suppose but not if it's labeled friendly fire
-	//		 see if we can't change it to "Executed!"
 	TargetUnit.TakeEffectDamage(self, KillAmount, 0, 0, ApplyEffectParameters, NewGameState);
 }

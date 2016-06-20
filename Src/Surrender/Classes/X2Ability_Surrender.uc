@@ -89,10 +89,54 @@ static function X2DataTemplate CreateSurrender()
 	Template.AddTargetEffect(ExecutedEffect);
 	Template.AddMultiTargetEffect(ExecutedEffect);
 
-	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	// includes special handling for misses
+	Template.BuildNewGameStateFn = Surrender_BuildGameState;
 	Template.BuildVisualizationFn = Surrender_BuildVisualization;
 
 	return Template;
+}
+
+// the memorial will list soldiers killed by a failed surrender as killed by the surrendering soldier
+// which is all well and good except it counts as friendly fire, which is a bit silly
+// so this manually sets it to use X2Effect_Executed's label instead
+// I feel like it makes slightly more sense to put it here than in visualization
+simulated function XComGameState Surrender_BuildGameState(XComGameStateContext Context)
+{
+	local XComGameState NewGameState;
+	local XComGameStateContext_Ability AbilityContext;
+	local XComGameState_Unit Unit;
+
+	// add the relevant effects normally, then check if cause of death should be updated
+
+	// the usual handling
+	NewGameState = TypicalAbility_BuildGameState(Context);
+
+	// todo: why is FillOutGameState getting warnings
+	//		 "Accessed array 'X2Ability_Surrender_0.MultiTargetEffectsOverrides' out of bounds (0/0)"
+
+	AbilityContext = XComGameStateContext_Ability(Context);
+
+	// check if they died
+	if(AbilityContext.ResultContext.HitResult == eHit_Miss)
+	{
+		foreach NewGameState.IterateByClassType(class'XComGameState_Unit', Unit)
+		{
+			// if this unit was targeted, cause of death needs to be fixed so it doesn't blame it on friendly fire
+			if(Unit.IsDead() && (AbilityContext.InputContext.PrimaryTarget.ObjectID == Unit.ObjectID || (INDEX_NONE != AbilityContext.InputContext.MultiTargets.find('ObjectID', Unit.ObjectID))))
+			{
+				// skip soldiers that evac'd but count as targets for whatever reason
+				// it's not like the ability kills them I just don't like the idea of setting their cause of death
+				// not sure if soldiers who already died and were evac'd would show up but this should cover that too
+				if(Unit.bRemovedFromPlay)
+				{
+					continue;
+				}
+				Unit.m_strCauseOfDeath = class'X2Effect_Executed'.default.UnitExecutedFlyover;
+			}
+		}
+	}
+
+	return NewGameState;
 }
 
 simulated function Surrender_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
