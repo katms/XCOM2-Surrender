@@ -15,10 +15,11 @@ static function array<X2DataTemplate> CreateTemplates()
 static function X2DataTemplate CreateSurrender()
 {
 	local X2AbilityTemplate Template;
-	local X2Condition_UnitProperty UnitProperty, ShooterProperty;
+	local X2Condition_UnitProperty UnitProperty;
 	local array<name> SkipExclusions;
 	local X2AbilityCost_ActionPoints ActionPointCost;
 	local X2Condition_UnitEffects ExcludeEffects;
+	local X2Effect_Executed ExecutedEffect;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, default.SurrenderName);
 
@@ -43,7 +44,8 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilityMultiTargetStyle = new class'X2AbilityMultiTarget_AllAllies';
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
 
-	Template.AbilityToHitCalc = default.DeadEye;
+	// apply the same hit/miss result to everyone
+	Template.AbilityToHitCalc = new class'SurrenderAbilityToHitCalc_AllOrNothing';
 
 	// shooter conditions
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
@@ -72,8 +74,17 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilityTargetConditions.AddItem(UnitProperty);
 	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
 
+	// if surrender fails, all soldiers are killed
+	// ...or bleeding out actually, but in context it's the same
+	ExecutedEffect = new class'X2Effect_Executed';
+	ExecutedEffect.bApplyOnHit = false;
+	ExecutedEffect.bApplyOnMiss = true;
+
 	Template.AddTargetEffect(class'X2StatusEffects'.static.CreateUnconsciousStatusEffect());
 	Template.AddMultiTargetEffect(class'X2StatusEffects'.static.CreateUnconsciousStatusEffect());
+
+	Template.AddTargetEffect(ExecutedEffect);
+	Template.AddMultiTargetEffect(ExecutedEffect);
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	// no visualization
