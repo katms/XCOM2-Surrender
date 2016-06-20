@@ -8,10 +8,23 @@ function RollForAbilityHit(XComGameState_Ability kAbility, AvailableTarget kTarg
 	local int MultiIndex, RandRoll;
 	local ArmorMitigationResults NoArmor;
 
-	RandRoll = `SYNC_RAND(100);
+	// for testing
+	if(none != `CHEATMGR && `CHEATMGR.bDeadeye)
+	{
+		ResultContext.HitResult = eHit_Success;
+	}
+	else if(none != `CHEATMGR && `CHEATMGR.bNoLuck)
+	{
+		ResultContext.HitResult = eHit_Miss;
+	}
 
-	ResultContext.HitResult = RandRoll >= PercentChanceToFail ? eHit_Success : eHit_Miss;
-	`log("Surrender result:"@RandRoll@ResultContext.HitResult);
+	else
+	{
+		RandRoll = `SYNC_RAND(100);
+		ResultContext.HitResult = RandRoll < PercentChanceToFail ? eHit_Miss : eHit_Success;
+		`log("Surrender result:"@RandRoll@ResultContext.HitResult);
+	}
+
 
 	for (MultiIndex = 0; MultiIndex < kTarget.AdditionalTargets.Length; ++MultiIndex)
 	{
