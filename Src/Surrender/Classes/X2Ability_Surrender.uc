@@ -59,9 +59,9 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
 	
 	SurrenderCondition = new class'X2Condition_Surrender';
-	// since stasis forces an auto-miss, units in stasis will get hit by the miss effect no matter what I do
-	// until I find something better, just don't allow surrenders if stasis is active and executions are enabled
-	SurrenderCondition.ForbidStasis = HasFailChance;
+	// for some reason execution hits through stasis, but unconsciousness doesn't
+	// so for now just forbid it always, the situation would be extremely rare anyway
+	SurrenderCondition.ForbidStasis = true;
 
 	Template.AbilityShooterConditions.AddItem(SurrenderCondition);
 
