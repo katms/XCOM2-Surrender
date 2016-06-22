@@ -80,10 +80,11 @@ static function X2DataTemplate CreateSurrender()
 	IsAlly.ExcludePanicked = false;
 	IsAlly.FailOnNonUnits = true;
 	
-	// exclude units that are already unconscious
+	// exclude units that are already unconscious or bleeding out
 	ExcludeEffects = new class'X2Condition_UnitEffects';
 	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.UnconsciousName, 'AA_UnitIsUnconscious');
-	
+	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.BleedingOutName, 'AA_UnitIsBleedingOut');
+
 	Template.AbilityTargetConditions.AddItem(IsAlly);
 	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
 
