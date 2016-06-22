@@ -22,6 +22,8 @@ static function X2DataTemplate CreateSurrender()
 	local X2Condition_UnitEffects ExcludeEffects;
 	local X2Effect UnconsciousEffect, ExecutedEffect;
 	local X2Effect_RemoveEffects RemoveEffects;
+	// need handling for executions
+	local bool HasFailChance;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, default.SurrenderName);
 
@@ -49,7 +51,9 @@ static function X2DataTemplate CreateSurrender()
 
 	// apply the same hit/miss result to everyone
 	Template.AbilityToHitCalc = new class'SurrenderAbilityToHitCalc_AllOrNothing';
-	
+	HasFailChance = class'SurrenderAbilityToHitCalc_AllOrNothing'.default.PercentChanceToFail > 0;
+	`log("HasFailChance:"@HasFailChance);
+
 	// shooter conditions
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
 
@@ -88,11 +92,7 @@ static function X2DataTemplate CreateSurrender()
 	Template.AbilityTargetConditions.AddItem(IsAlly);
 	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
 
-	// if surrender fails, all soldiers are killed
-	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
-	ExecutedEffect.bApplyOnHit = false;
-	ExecutedEffect.bApplyOnMiss = true;
-	ExecutedEffect.TargetConditions.AddItem(CanSurrender);
+
 
 	// free mind controlled allies, since they shouldn't count as surrendering
 	RemoveEffects = new class'X2Effect_RemoveEffects';
@@ -106,13 +106,27 @@ static function X2DataTemplate CreateSurrender()
 
 	UnconsciousEffect = class'X2StatusEffects'.static.CreateUnconsciousStatusEffect();
 	UnconsciousEffect.TargetConditions.AddItem(CanSurrender);
-	UnconsciousEffect.TargetConditions.AddItem(ExcludeEffects);
+	// units who are unconscious or bleeding out will not be knocked unconscious, but they can be executed
+	// UnconsciousEffect.TargetConditions.AddItem(ExcludeEffects);
+
+	if(HasFailChance)
+	{
+		// if surrender fails, all soldiers are killed
+		ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
+		ExecutedEffect.bApplyOnHit = false;
+		ExecutedEffect.bApplyOnMiss = true;
+		ExecutedEffect.TargetConditions.AddItem(CanSurrender);
+
+		Template.AddTargetEffect(ExecutedEffect);
+		Template.AddMultiTargetEffect(ExecutedEffect);
+	}
+	else // allows Surrender to work even if stasis is active
+	{
+		UnconsciousEffect.bApplyOnMiss = true;
+	}
 
 	Template.AddTargetEffect(UnconsciousEffect);
 	Template.AddMultiTargetEffect(UnconsciousEffect);
-
-	Template.AddTargetEffect(ExecutedEffect);
-	Template.AddMultiTargetEffect(ExecutedEffect);
 
 	// includes special handling for misses
 	Template.BuildNewGameStateFn = Surrender_BuildGameState;
