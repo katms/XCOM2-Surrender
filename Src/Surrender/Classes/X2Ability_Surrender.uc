@@ -15,11 +15,13 @@ static function array<X2DataTemplate> CreateTemplates()
 static function X2DataTemplate CreateSurrender()
 {
 	local X2AbilityTemplate Template;
-	local X2Condition_UnitProperty UnitProperty;
+	// IsAlly is all allies, CanSurrender is all allies who aren't mind controlled
+	local X2Condition_UnitProperty IsAlly, CanSurrender;
 	local array<name> SkipExclusions;
 	local X2AbilityCost_ActionPoints ActionPointCost;
 	local X2Condition_UnitEffects ExcludeEffects;
-	local X2Effect ExecutedEffect;
+	local X2Effect UnconsciousEffect, ExecutedEffect;
+	local X2Effect_RemoveEffects RemoveEffects;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, default.SurrenderName);
 
@@ -42,13 +44,12 @@ static function X2DataTemplate CreateSurrender()
 
 	// target an arbitrary squad member and all their allies
 	Template.AbilityTargetStyle = default.SingleTargetWithSelf;
-	// if this doesn't work out as intended re: UnitProperty just use a custom BuildNewGameStateFn
 	Template.AbilityMultiTargetStyle = new class'X2AbilityMultiTarget_AllAllies';
 	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
 
 	// apply the same hit/miss result to everyone
 	Template.AbilityToHitCalc = new class'SurrenderAbilityToHitCalc_AllOrNothing';
-
+	
 	// shooter conditions
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
 
@@ -60,31 +61,54 @@ static function X2DataTemplate CreateSurrender()
 	Template.AddShooterEffectExclusions(SkipExclusions);
 
 
-	// target conditions, get all soldiers, even if panicked or in stasis
-	UnitProperty = new class'X2Condition_UnitProperty';
-	UnitProperty.ExcludeHostileToSource = true;
-	UnitProperty.ExcludeFriendlyToSource = false;
-	// todo: make sure this works for VIP
-	UnitProperty.RequireSquadmates = true; // prevents random civilians counting as targets
-	UnitProperty.ExcludeInStasis = false;
-	UnitProperty.ExcludePanicked = false; // panicked units can surrender but they need someone else to activate this ability
-	UnitProperty.TreatMindControlledSquadmateAsHostile = true; // leave mindcontrolled allies untouched
-	UnitProperty.FailOnNonUnits = true;
+	// target conditions, get all soldiers + VIP, even if panicked or in stasis
+	CanSurrender = new class'X2Condition_UnitProperty';
+	CanSurrender.ExcludeHostileToSource = true;
+	CanSurrender.ExcludeFriendlyToSource = false;
+	CanSurrender.RequireSquadmates = true; // prevents random civilians counting as targets
+	CanSurrender.ExcludeInStasis = false;
+	CanSurrender.ExcludePanicked = false; // panicked units can surrender but they need someone else to activate this ability
+	CanSurrender.TreatMindControlledSquadmateAsHostile = true; // leave mindcontrolled allies untouched
+	CanSurrender.FailOnNonUnits = true;
 
+	// the same except for TreatMindControlledSquadmateAsHostile
+	IsAlly = new class'X2Condition_UnitProperty';
+	IsAlly.ExcludeHostileToSource = true;
+	IsAlly.ExcludeFriendlyToSource = false;
+	IsAlly.RequireSquadmates = true;
+	IsAlly.ExcludeInStasis = false;
+	IsAlly.ExcludePanicked = false;
+	IsAlly.FailOnNonUnits = true;
+	
 	// exclude units that are already unconscious
 	ExcludeEffects = new class'X2Condition_UnitEffects';
 	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.UnconsciousName, 'AA_UnitIsUnconscious');
-
-	Template.AbilityTargetConditions.AddItem(UnitProperty);
+	
+	Template.AbilityTargetConditions.AddItem(IsAlly);
 	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
 
 	// if surrender fails, all soldiers are killed
 	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
 	ExecutedEffect.bApplyOnHit = false;
 	ExecutedEffect.bApplyOnMiss = true;
+	ExecutedEffect.TargetConditions.AddItem(CanSurrender);
 
-	Template.AddTargetEffect(class'X2StatusEffects'.static.CreateUnconsciousStatusEffect());
-	Template.AddMultiTargetEffect(class'X2StatusEffects'.static.CreateUnconsciousStatusEffect());
+	// free mind controlled allies, since they shouldn't count as surrendering
+	RemoveEffects = new class'X2Effect_RemoveEffects';
+	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
+	RemoveEffects.bCleanse = true;
+	RemoveEffects.bApplyOnMiss = true;
+
+	Template.AddTargetEffect(RemoveEffects);
+	Template.AddMultiTargetEffect(RemoveEffects);
+
+
+	UnconsciousEffect = class'X2StatusEffects'.static.CreateUnconsciousStatusEffect();
+	UnconsciousEffect.TargetConditions.AddItem(CanSurrender);
+	UnconsciousEffect.TargetConditions.AddItem(ExcludeEffects);
+
+	Template.AddTargetEffect(UnconsciousEffect);
+	Template.AddMultiTargetEffect(UnconsciousEffect);
 
 	Template.AddTargetEffect(ExecutedEffect);
 	Template.AddMultiTargetEffect(ExecutedEffect);
