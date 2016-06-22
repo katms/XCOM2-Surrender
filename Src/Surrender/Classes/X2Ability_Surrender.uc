@@ -17,6 +17,7 @@ static function X2DataTemplate CreateSurrender()
 	local X2AbilityTemplate Template;
 	// IsAlly is all allies, CanSurrender is all allies who aren't mind controlled
 	local X2Condition_UnitProperty IsAlly, CanSurrender;
+	local X2Condition_Surrender SurrenderCondition;
 	local array<name> SkipExclusions;
 	local X2AbilityCost_ActionPoints ActionPointCost;
 	local X2Condition_UnitEffects ExcludeEffects;
@@ -56,6 +57,13 @@ static function X2DataTemplate CreateSurrender()
 
 	// shooter conditions
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	
+	SurrenderCondition = new class'X2Condition_Surrender';
+	// since stasis forces an auto-miss, units in stasis will get hit by the miss effect no matter what I do
+	// until I find something better, just don't allow surrenders if stasis is active and executions are enabled
+	SurrenderCondition.ForbidStasis = HasFailChance;
+
+	Template.AbilityShooterConditions.AddItem(SurrenderCondition);
 
 	// allow anyone to surrender
 	SkipExclusions.AddItem(class'X2Ability_CarryUnit'.default.CarryUnitEffectName);
