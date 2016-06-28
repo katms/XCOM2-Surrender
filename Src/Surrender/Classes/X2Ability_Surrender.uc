@@ -39,6 +39,7 @@ static function X2DataTemplate CreateSurrender()
 	Template.bAllowedByDefault = true;
 
 	Template.bSkipFireAction = true;
+	Template.bLimitTargetIcons = true;
 
 	ActionPointCost = new class'X2AbilityCost_ActionPoints';
 	ActionPointCost.iNumPoints = 1;
