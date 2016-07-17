@@ -130,7 +130,7 @@ static function X2DataTemplate CreateBeCaptured()
 	EventListener.ListenerData.Deferral = ELD_OnStateSubmitted;
 	EventListener.ListenerData.EventID = 'Surrender';
 	EventListener.ListenerData.Filter = eFilter_Unit;
-	EventListener.ListenerData.EventFn = class'XComGameState_Ability'.static.AbilityTriggerEventListener_SelfWithAdditionalTargets;
+	EventListener.ListenerData.EventFn = class'XComGameState_Ability'.static.AbilityTriggerEventListener_Self;
 	Template.AbilityTriggers.AddItem(EventListener);
 
 	// effects
