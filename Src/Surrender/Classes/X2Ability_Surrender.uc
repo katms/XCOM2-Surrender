@@ -1,7 +1,9 @@
-class X2Ability_Surrender extends X2Ability;
+class X2Ability_Surrender extends X2Ability config(Surrender);
 
 var name SurrenderName;
 var X2Condition_UnitProperty Squadmate;
+
+var config int StabilizeChance;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -21,6 +23,7 @@ static function X2DataTemplate CreateSurrender()
 {
 	local X2AbilityTemplate Template;
 	local X2Condition_Surrender SurrenderCondition;
+	local X2Condition_UnitStatCheck UnitStatCheckCondition;
 	local array<name> SkipExclusions;
 	local X2AbilityCost_ActionPoints ActionPointCost;
 	local X2Effect_RemoveEffects RemoveEffects;
@@ -68,6 +71,11 @@ static function X2DataTemplate CreateSurrender()
 	
 	Template.AbilityTargetConditions.AddItem(default.Squadmate);
 
+	// exclude units who are dead and not bleeding out
+	UnitStatCheckCondition = new class'X2Condition_UnitStatCheck';
+	UnitStatCheckCondition.AddCheckStat(eStat_HP, 0, eCheck_GreaterThan);
+	Template.AbilityTargetConditions.AddItem(UnitStatCheckCondition);
+
 
 	// remove stasis so surrender can hit properly
 	// free mind controlled allies, since they shouldn't stick around for capturing/dying
@@ -75,7 +83,6 @@ static function X2DataTemplate CreateSurrender()
 	// todo: remove mind control in the next step?
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_Stasis'.default.EffectName);
-	RemoveEffects.bCleanse = true;
 	RemoveEffects.bApplyOnMiss = true; // will miss if stasised
 
 	Template.AddTargetEffect(RemoveEffects);
@@ -95,7 +102,9 @@ static function X2DataTemplate CreateBeCaptured()
 {
 	local X2AbilityTemplate Template;
 	local X2Effect UnconsciousEffect, ExecutedEffect;
+	local X2Effect_RemoveEffects StabilizeEffect;
 	local X2Condition_UnitEffects ExcludeEffects;
+	local X2Condition_UnitStatCheck UnitStatCheckCondition;
 	local X2AbilityTrigger_EventListener EventListener;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, 'BeCaptured');
@@ -117,13 +126,16 @@ static function X2DataTemplate CreateBeCaptured()
 	Template.AbilityTargetConditions.AddItem(default.Squadmate);
 
 
-	// exclude units that are already unconscious or bleeding out
+	// exclude units that are already unconscious (will be spared on execution)
 	ExcludeEffects = new class'X2Condition_UnitEffects';
 	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.UnconsciousName, 'AA_UnitIsUnconscious');
-	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.BleedingOutName, 'AA_UnitIsBleedingOut');
 
 	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
 
+	// exclude units who are dead and not bleeding out
+	UnitStatCheckCondition = new class'X2Condition_UnitStatCheck';
+	UnitStatCheckCondition.AddCheckStat(eStat_HP, 0, eCheck_GreaterThan);
+	Template.AbilityTargetConditions.AddItem(UnitStatCheckCondition);
 
 	// trigger
 	EventListener = new class'X2AbilityTrigger_EventListener';
@@ -134,6 +146,14 @@ static function X2DataTemplate CreateBeCaptured()
 	Template.AbilityTriggers.AddItem(EventListener);
 
 	// effects
+
+	// on success, stabilize bleeding out units so they can be captured
+	// normal stabilize adds unconsciousness anyway so this should work out
+	StabilizeEffect = new class'X2Effect_RemoveEffects';
+	StabilizeEffect.EffectNamesToRemove.AddItem(class'X2StatusEffects'.default.BleedingOutName);
+	Template.AddTargetEffect(StabilizeEffect);
+	Template.AddMultiTargetEffect(StabilizeEffect);
+
 	UnconsciousEffect = class'X2StatusEffects'.static.CreateUnconsciousStatusEffect();
 	Template.AddTargetEffect(UnconsciousEffect);
 	Template.AddMultiTargetEffect(UnconsciousEffect);
@@ -218,6 +238,7 @@ defaultproperties
 	Begin Object Class=X2Condition_UnitProperty Name=DefaultSurrenderSquadmate
 		ExcludeHostileToSource=true
 		ExcludeFriendlyToSource=false
+		ExcludeDead=false // needed to target units who are bleeding out. To skip units who really are dead, check HP > 0
 		RequireSquadmates=true
 		ExcludeInStasis=false
 		ExcludePanicked=false
