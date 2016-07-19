@@ -83,6 +83,8 @@ static function X2DataTemplate CreateSurrender()
 	// todo: remove mind control in the next step?
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_Stasis'.default.EffectName);
+	// they won't need it where they're going and it blocks unconsciousness
+	RemoveEffects.EffectNamesToRemove.AddItem('MindShieldImmunity');
 	RemoveEffects.bApplyOnMiss = true; // will miss if stasised
 
 	Template.AddTargetEffect(RemoveEffects);
