@@ -16,6 +16,9 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(CreateSurrender());
 	Templates.AddItem(CreateBeCaptured());
 
+	// old surrender, only kept so that updating doesn't break tactical saves where this one is already being used
+	Templates.AddItem(CreateKnockoutAll());
+
 	return Templates;
 }
 
@@ -268,9 +271,113 @@ simulated function Surrender_BuildVisualization(XComGameState VisualizeGameState
 	// surrender succeeded, don't visualize everyone falling unconscious
 }
 
+// kept for backwards compatibility
+static function X2DataTemplate CreateKnockoutAll()
+{
+	local X2AbilityTemplate Template;
+	local X2Condition_Surrender SurrenderCondition;
+	local array<name> SkipExclusions;
+	local X2AbilityCost_ActionPoints ActionPointCost;
+	local X2Condition_UnitEffects ExcludeEffects, NotMindControlled;
+	local X2Effect UnconsciousEffect, ExecutedEffect;
+	local X2Effect_RemoveEffects RemoveEffects, Stabilize;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'KnockoutAll');
+
+	// disable for multiplayer
+	Template.RemoveTemplateAvailablility(Template.BITFIELD_GAMEAREA_Multiplayer);
+
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.PLACE_EVAC_PRIORITY;
+	Template.Hostility = eHostility_Defensive;
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_voidadept";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.bAllowedByDefault = true;
+
+	Template.bSkipFireAction = true;
+
+	ActionPointCost = new class'X2AbilityCost_ActionPoints';
+	ActionPointCost.iNumPoints = 1;
+	ActionPointCost.bConsumeAllPoints = true;
+	Template.AbilityCosts.AddItem(ActionPointCost);
+
+	// target an arbitrary squad member and all their allies
+	Template.AbilityTargetStyle = default.SingleTargetWithSelf;
+	Template.AbilityMultiTargetStyle = new class'X2AbilityMultiTarget_AllAllies';
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+
+	// apply the same hit/miss result to everyone
+	Template.AbilityToHitCalc = new class'SurrenderAbilityToHitCalc_AllOrNothing';
+
+	// shooter conditions
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+
+	SurrenderCondition = new class'X2Condition_Surrender';
+	// for some reason execution hits through stasis, but unconsciousness doesn't
+	SurrenderCondition.ForbidStasis = true;
+
+	Template.AbilityShooterConditions.AddItem(SurrenderCondition);
+
+	// allow anyone to surrender
+	SkipExclusions.AddItem(class'X2Ability_CarryUnit'.default.CarryUnitEffectName);
+	SkipExclusions.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
+	SkipExclusions.AddItem(class'X2StatusEffects'.default.BurningName);
+
+	Template.AddShooterEffectExclusions(SkipExclusions);
+
+	// exclude units that are already unconscious or bleeding out
+	ExcludeEffects = new class'X2Condition_UnitEffects';
+	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.UnconsciousName, 'AA_UnitIsUnconscious');
+	ExcludeEffects.AddExcludeEffect(class'X2StatusEffects'.default.BleedingOutName, 'AA_UnitIsBleedingOut');
+
+	Template.AbilityTargetConditions.AddItem(default.Squadmate);
+	Template.AbilityTargetConditions.AddItem(ExcludeEffects);
+
+	// free mind controlled allies, since they shouldn't count as surrendering
+	RemoveEffects = new class'X2Effect_RemoveEffects';
+	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
+	RemoveEffects.EffectNamesToRemove.AddItem('MindShieldImmunity'); // might as well fix this part while I'm here
+	RemoveEffects.bApplyOnMiss = true; // hit through stasis
+
+	Template.AddTargetEffect(RemoveEffects);
+	Template.AddMultiTargetEffect(RemoveEffects);
+
+	Stabilize = new class'X2Effect_RemoveEffects';
+	Stabilize.EffectNamesToRemove.AddItem(class'X2StatusEffects'.default.BleedingOutName);
+	Stabilize.ApplyChanceFn = ApplyChance_Stabilize;
+
+	Template.AddTargetEffect(Stabilize);
+	Template.AddMultiTargetEffect(Stabilize);
+
+	UnconsciousEffect = class'X2StatusEffects'.static.CreateUnconsciousStatusEffect();
+
+	// if surrender fails, all soldiers are killed
+	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
+	ExecutedEffect.bApplyOnHit = false;
+	ExecutedEffect.bApplyOnMiss = true;
+
+	NotMindControlled = new class'X2Condition_UnitEffects';
+	NotMindControlled.AddExcludeEffect(class'X2Effect_MindControl'.default.EffectName, 'AA_UnitIsImmune');
+	// formerly mind-controlled allies don't share this fate
+	UnconsciousEffect.TargetConditions.AddItem(NotMindControlled);
+	ExecutedEffect.TargetConditions.AddItem(NotMindControlled);
+
+	Template.AddTargetEffect(ExecutedEffect);
+	Template.AddMultiTargetEffect(ExecutedEffect);
+
+	Template.AddTargetEffect(UnconsciousEffect);
+	Template.AddMultiTargetEffect(UnconsciousEffect);
+
+	// includes special handling for misses
+	Template.BuildNewGameStateFn = Surrender_BuildGameState;
+	Template.BuildVisualizationFn = Surrender_BuildVisualization;
+
+	return Template;
+}
+
 defaultproperties
 {
-	SurrenderName = "KnockoutAll"
+	SurrenderName = "Surrender"
 
 	Begin Object Class=X2Condition_UnitProperty Name=DefaultSurrenderSquadmate
 		ExcludeHostileToSource=true
