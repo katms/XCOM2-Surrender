@@ -151,6 +151,7 @@ static function X2DataTemplate CreateBeCaptured()
 	// normal stabilize adds unconsciousness anyway so this should work out
 	StabilizeEffect = new class'X2Effect_RemoveEffects';
 	StabilizeEffect.EffectNamesToRemove.AddItem(class'X2StatusEffects'.default.BleedingOutName);
+	StabilizeEffect.ApplyChance = default.StabilizeChance;
 	Template.AddTargetEffect(StabilizeEffect);
 	Template.AddMultiTargetEffect(StabilizeEffect);
 
