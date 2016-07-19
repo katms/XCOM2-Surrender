@@ -109,7 +109,7 @@ static function X2DataTemplate CreateBeCaptured()
 	local X2AbilityTemplate Template;
 	local X2Effect UnconsciousEffect, ExecutedEffect;
 	local X2Effect_RemoveEffects StabilizeEffect;
-	local X2Condition_UnitEffects ExcludeEffects;
+	local X2Condition_UnitEffects ExcludeEffects, AlreadyDying;
 	local X2Condition_UnitStatCheck UnitStatCheckCondition;
 	local X2AbilityTrigger_EventListener EventListener;
 
@@ -168,6 +168,10 @@ static function X2DataTemplate CreateBeCaptured()
 	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
 	ExecutedEffect.bApplyOnHit = false;
 	ExecutedEffect.bApplyOnMiss = true;
+
+	// this doesn't really matter but
+	AlreadyDying = new class'X2Condition_UnitEffects';
+	AlreadyDying.AddExcludeEffect(class'X2StatusEffects'.default.BleedingOutName, 'AA_UnitIsBleedingOut');
 	Template.AddTargetEffect(ExecutedEffect);
 	Template.AddMultiTargetEffect(ExecutedEffect);
 
