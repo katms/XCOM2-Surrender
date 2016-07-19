@@ -3,7 +3,8 @@ class X2Ability_Surrender extends X2Ability config(Surrender);
 var name SurrenderName;
 var X2Condition_UnitProperty Squadmate;
 
-var config int StabilizeChance;
+var config int StabilizeBaseChance;
+var config int StabilizeModifier;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -153,7 +154,7 @@ static function X2DataTemplate CreateBeCaptured()
 	// normal stabilize adds unconsciousness anyway so this should work out
 	StabilizeEffect = new class'X2Effect_RemoveEffects';
 	StabilizeEffect.EffectNamesToRemove.AddItem(class'X2StatusEffects'.default.BleedingOutName);
-	StabilizeEffect.ApplyChance = default.StabilizeChance;
+	StabilizeEffect.ApplyChanceFn = ApplyChance_Stabilize;
 	Template.AddTargetEffect(StabilizeEffect);
 	Template.AddMultiTargetEffect(StabilizeEffect);
 
@@ -173,6 +174,39 @@ static function X2DataTemplate CreateBeCaptured()
 	Template.BuildVisualizationFn = Surrender_BuildVisualization;
 
 	return Template;
+}
+
+static function name ApplyChance_Stabilize(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState)
+{
+	local XComGameState_Unit Target;
+	local XComGameState_Effect EffectState;
+	local int ChanceSuccess, idx;
+
+	Target = XComGameState_Unit(kNewTargetState);
+	if(none == Target)
+	{
+		return 'AA_NotAUnit';
+	}
+
+	if(!Target.IsBleedingOut())
+	{
+		return 'AA_UnitIsImmune';
+	}
+
+	ChanceSuccess = default.StabilizeBaseChance;
+	EffectState = Target.GetUnitAffectedByEffectState(class'X2StatusEffects'.default.BleedingOutName);
+
+	for(idx = 2; idx <= EffectState.iTurnsRemaining; ++idx)
+	{
+		ChanceSuccess += default.StabilizeModifier;
+	}
+
+	if(`SYNC_RAND_STATIC(100) < ChanceSuccess)
+	{
+		return 'AA_Success';
+	}
+
+	return 'AA_EffectChanceFailed';
 }
 
 // the memorial will list soldiers killed by a failed surrender as killed by the surrendering soldier
