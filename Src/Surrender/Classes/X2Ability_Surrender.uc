@@ -37,7 +37,7 @@ static function X2DataTemplate CreateSurrender()
 	// disable for multiplayer
 	Template.RemoveTemplateAvailablility(Template.BITFIELD_GAMEAREA_Multiplayer);
 
-	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_ShowIfAvailable;
 	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.PLACE_EVAC_PRIORITY;
 	Template.Hostility = eHostility_Defensive;
 	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_voidadept";
@@ -88,7 +88,7 @@ static function X2DataTemplate CreateSurrender()
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_Stasis'.default.EffectName);
 	// they won't need it where they're going and it blocks unconsciousness
-	RemoveEffects.EffectNamesToRemove.AddItem('MindShieldImmunity');
+	//RemoveEffects.EffectNamesToRemove.AddItem('MindShieldImmunity');
 	RemoveEffects.bApplyOnMiss = true; // will miss if stasised
 
 	Template.AddTargetEffect(RemoveEffects);
@@ -162,6 +162,7 @@ static function X2DataTemplate CreateBeCaptured()
 	Template.AddMultiTargetEffect(StabilizeEffect);
 
 	UnconsciousEffect = class'X2StatusEffects'.static.CreateUnconsciousStatusEffect();
+	UnconsciousEffect.DamageTypes.Length = 0; // bypass any effects that make units immune to unconsciousness
 	Template.AddTargetEffect(UnconsciousEffect);
 	Template.AddMultiTargetEffect(UnconsciousEffect);
 
@@ -340,7 +341,6 @@ static function X2DataTemplate CreateKnockoutAll()
 	// free mind controlled allies, since they shouldn't count as surrendering
 	RemoveEffects = new class'X2Effect_RemoveEffects';
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
-	RemoveEffects.EffectNamesToRemove.AddItem('MindShieldImmunity'); // might as well fix this part while I'm here
 	RemoveEffects.bApplyOnMiss = true; // hit through stasis
 
 	Template.AddTargetEffect(RemoveEffects);
@@ -354,6 +354,7 @@ static function X2DataTemplate CreateKnockoutAll()
 	Template.AddMultiTargetEffect(Stabilize);
 
 	UnconsciousEffect = class'X2StatusEffects'.static.CreateUnconsciousStatusEffect();
+	UnconsciousEffect.DamageTypes.length = 0;
 
 	// if surrender fails, all soldiers are killed
 	ExecutedEffect = new class'X2Effect_ExecutedNoBleedout';
