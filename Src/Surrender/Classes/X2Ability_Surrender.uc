@@ -28,6 +28,7 @@ static function X2DataTemplate CreateSurrender()
 	local array<name> SkipExclusions;
 	local X2AbilityCost_ActionPoints ActionPointCost;
 	local X2Effect_RemoveEffects RemoveEffects;
+	local name EffectName;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, default.SurrenderName);
 
@@ -84,8 +85,13 @@ static function X2DataTemplate CreateSurrender()
 	// todo: remove mind control in the next step?
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_MindControl'.default.EffectName);
 	RemoveEffects.EffectNamesToRemove.AddItem(class'X2Effect_Stasis'.default.EffectName);
-	// they won't need it where they're going and it blocks unconsciousness
-	//RemoveEffects.EffectNamesToRemove.AddItem('MindShieldImmunity');
+
+	// remove any effects that can save the target from death
+	foreach class'X2AbilityTemplateManager'.default.PreDeathCheckEffects(Eff
+ectName)
+	{
+		RemoveEffects.EffectNamesToRemove.AddItem(EffectName);
+	}
 	RemoveEffects.bApplyOnMiss = true; // will miss if stasised
 
 	Template.AddTargetEffect(RemoveEffects);
