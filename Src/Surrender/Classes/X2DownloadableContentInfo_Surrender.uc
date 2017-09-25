@@ -33,3 +33,51 @@ static event OnPostTemplatesCreated()
 	}
 
 }
+
+// this hook is called after the game loads all the things we need to check
+static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
+{
+	local int i;
+	i = SetupData.find('TemplateName', class'X2Ability_Surrender'.default.SurrenderName);
+	if(INDEX_NONE != i && (!CaptureInEffect() || SpecialCase()))
+	{
+		SetupData.Remove(i,1);
+	}
+}
+
+static function bool CaptureInEffect()
+{
+	local Sequence Seq;
+	local array<SequenceObject> SeqObjs;
+
+	// check the kismet sequence for this mission to see if soldiers are supposed to be captured here
+	// this is better than hardcoding all the right story missions
+	Seq = `XWORLDINFO.GetGameSequence();
+	if(none != Seq)
+	{
+		Seq.FindSeqObjectsByClass(class'SeqAct_CaptureRemainingXCom', true, SeqObjs);
+		return SeqObjs.length > 0;
+	}
+	return false;
+}
+
+// some mission types allow soldiers to be captured but we don't want the ability available anyway
+static function bool SpecialCase()
+{
+	local XComGameState_BattleData BattleState;
+	local name MissionName, MissionFamily;
+
+	BattleState = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+
+	if(none != BattleState)
+	{
+		MissionFamily = name(BattleState.MapData.ActiveMission.MissionFamily);
+		MissionName = BattleState.MapData.ActiveMission.MissionName;
+		if(INDEX_NONE != class'X2Condition_Surrender'.default.CannotSurrender.find(MissionName)
+		|| INDEX_NONE != class'X2Condition_Surrender'.default.CannotSurrender.find(MissionFamily))
+		{
+			return true;
+		}
+	}
+	return false;
+}
