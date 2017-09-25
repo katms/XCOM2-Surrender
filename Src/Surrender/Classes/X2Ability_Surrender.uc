@@ -261,7 +261,7 @@ simulated function XComGameState Surrender_BuildGameState(XComGameStateContext C
 	return NewGameState;
 }
 
-simulated function Surrender_BuildVisualization(XComGameState VisualizeGameState, out array<VisualizationTrack> OutVisualizationTracks)
+simulated function Surrender_BuildVisualization(XComGameState VisualizeGameState)
 {
 	local XComGameStateContext_Ability AbilityContext;
 	AbilityContext = XComGameStateContext_Ability(VisualizeGameState.GetContext());
@@ -270,7 +270,7 @@ simulated function Surrender_BuildVisualization(XComGameState VisualizeGameState
 	// also since the gremlin will still be told to die, it will look less silly if the specialist isn't standing there complete unfazed
 	if(AbilityContext.ResultContext.HitResult == eHit_Miss)
 	{
-		TypicalAbility_BuildVisualization(VisualizeGameState, OutVisualizationTracks);
+		TypicalAbility_BuildVisualization(VisualizeGameState);
 	}
 
 	// surrender succeeded, don't visualize everyone falling unconscious

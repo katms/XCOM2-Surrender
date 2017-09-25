@@ -35,12 +35,12 @@ function RollForAbilityHit(XComGameState_Ability kAbility, AvailableTarget kTarg
 }
 
 
-protected function int GetHitChance(XComGameState_Ability kAbility, AvailableTarget kTarget, optional bool bDebugLog=false)
+protected function int GetHitChance(XComGameState_Ability kAbility, AvailableTarget kTarget, optional out ShotBreakdown kBreakdown, optional bool bDebugLog=false)
 {
 	return 100-PercentChanceToFail;
 }
 
-function int GetShotBreakdown(XComGameState_Ability kAbility, AvailableTarget kTarget, optional out ShotBreakdown kBreakdown)
+function int GetShotBreakdown(XComGameState_Ability kAbility, AvailableTarget kTarget, optional out ShotBreakdown kBreakdown, optional bool bDebugLog=false)
 {
 	kBreakdown.HideShotBreakdown = true;
 	return 100-PercentChanceToFail;
