@@ -8,7 +8,10 @@
 //  Copyright (c) 2016 Firaxis Games, Inc. All rights reserved.
 //---------------------------------------------------------------------------------------
 
-class X2DownloadableContentInfo_Surrender extends X2DownloadableContentInfo;
+class X2DownloadableContentInfo_Surrender extends X2DownloadableContentInfo
+	config(Surrender);
+
+var config array<name> SoldierTemplates;
 
 /// <summary>
 /// Called after the Templates have been created (but before they are validated) while this DLC / Mod is installed.
@@ -19,16 +22,20 @@ static event OnPostTemplatesCreated()
 	local X2CharacterTemplate CharTemplate;
 	local array<X2DataTemplate> Templates;
 	local X2DataTemplate Template;
+	local name TemplateName;
 
 	CharMgr = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
-	CharMgr.FindDataTemplateAllDifficulties('Soldier', Templates);
-
-	foreach Templates(Template)
+	foreach default.SoldierTemplates(TemplateName)
 	{
-		CharTemplate = X2CharacterTemplate(Template);
-		if(none != CharTemplate)
+		CharMgr.FindDataTemplateAllDifficulties(TemplateName, Templates);
+
+		foreach Templates(Template)
 		{
-			CharTemplate.Abilities.AddItem(class'X2Ability_Surrender'.default.SurrenderName);
+			CharTemplate = X2CharacterTemplate(Template);
+			if(none != CharTemplate)
+			{
+				CharTemplate.Abilities.AddItem(class'X2Ability_Surrender'.default.SurrenderName);
+			}
 		}
 	}
 
